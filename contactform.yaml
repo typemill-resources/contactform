@@ -1,0 +1,110 @@
+﻿name: ContactForm
+version: 1.0.3
+description: Integrate a google like text-add into each content page (file).
+author: Sebastian Schürmanns
+homepage: https://typemill.net
+licence: MIT
+
+settings:
+  mailto: your@email-here.io
+  page_value: some/path/here
+  name_label: Name
+  email_label: E-mail
+  subject_label: Subject
+  message_label: Message
+  button_label: Send
+  message_success: "## Thank you!\r\n\r\nWe got your message and will answer as soon as possible."
+  message_error: "## Error\r\n\r\nWe could not send your message. Please send your e-mail manually."
+
+forms:
+  fields:
+
+    mailto:
+      type: email
+      label: Send messages to this e-mail
+      placeholder: 'your@email-here.io'
+      required: true
+
+    page_value:
+      type: text
+      label: Path to page where to include the form
+      placeholder: 'path/to/page'
+      required: true
+
+    name_label:
+      type: text
+      label: Label for Name Input Field
+      placeholder: 'Name'
+      required: true
+
+    email_label:
+      type: text
+      label: Label for E-Mail-Field
+      placeholder: 'E-Mail'
+      required: true
+
+    subject_label:
+      type: text
+      label: Label for Subject-Field
+      placeholder: 'Subject'
+      required: true
+
+    message_label:
+      type: text
+      label: Label for Message
+      placeholder: 'Your Message'
+      required: true
+
+    button_label:
+      type: text
+      label: Label for Button
+      placeholder: 'Send Message'
+      required: true
+
+    legalnotice:
+      type: textarea
+      rows: 5;
+      label: Text below button (use markdown)
+      placeholder: 'Add your legal text or other hints here'
+
+    message_success:
+      type: textarea
+      rows: 5;
+      label: Message if mail is send (use markdown)
+      placeholder: 'Add your legal text or other hints here'
+
+    message_error:
+      type: textarea
+      rows: 5;
+      label: Message if mail failed (use markdown)
+      placeholder: 'Add your legal text or other hints here'
+
+public:
+  fields:
+
+    name:
+      type: text
+      label: name_label
+      required: true
+      class: 'tm-input'
+
+    email:
+      type: email
+      label: email_label
+      required: true
+      class: 'tm-input'
+
+    subject:
+      type: text
+      label: subject_label
+      required: true
+      class: 'tm-input'
+
+    message:
+      type: textarea
+      label: message_label
+      required: true
+      class: 'tm-textarea'
+
+    legalnotice:
+      type: paragraph
