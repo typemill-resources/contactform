@@ -1,9 +1,11 @@
 ﻿name: ContactForm
-version: 1.0.3
-description: Integrate a google like text-add into each content page (file).
+version: 1.2.0
+description: Add a simple contact form to your typemill website.
 author: Sebastian Schürmanns
 homepage: https://typemill.net
 licence: MIT
+dependencies:
+  - mail
 
 settings:
   mailto: your@email-here.io
@@ -15,69 +17,105 @@ settings:
   button_label: Send
   message_success: "## Thank you!\r\n\r\nWe got your message and will answer as soon as possible."
   message_error: "## Error\r\n\r\nWe could not send your message. Please send your e-mail manually."
+  
 
 forms:
   fields:
 
-    mailto:
-      type: email
-      label: Send messages to this e-mail
-      placeholder: 'your@email-here.io'
-      required: true
+    contactformconfig:
+      type: fieldset
+      legend: Configure the Contact Form
+      fields:
+        mailto:
+          type: email
+          label: Send messages to this e-mail
+          placeholder: 'your@email-here.io'
+          required: true
 
-    page_value:
-      type: text
-      label: Path to page where to include the form
-      placeholder: 'path/to/page'
-      required: true
+        page_value:
+          type: text
+          label: Path to page where to include the form
+          placeholder: 'path/to/page'
+          required: true
 
-    name_label:
-      type: text
-      label: Label for Name Input Field
-      placeholder: 'Name'
-      required: true
+        name_label:
+          type: text
+          label: Label for Name Input Field
+          placeholder: 'Name'
+          required: true
 
-    email_label:
-      type: text
-      label: Label for E-Mail-Field
-      placeholder: 'E-Mail'
-      required: true
+        email_label:
+          type: text
+          label: Label for E-Mail-Field
+          placeholder: 'E-Mail'
+          required: true
 
-    subject_label:
-      type: text
-      label: Label for Subject-Field
-      placeholder: 'Subject'
-      required: true
+        subject_label:
+          type: text
+          label: Label for Subject-Field
+          placeholder: 'Subject'
+          required: true
 
-    message_label:
-      type: text
-      label: Label for Message
-      placeholder: 'Your Message'
-      required: true
+        message_label:
+          type: text
+          label: Label for Message
+          placeholder: 'Your Message'
+          required: true
 
-    button_label:
-      type: text
-      label: Label for Button
-      placeholder: 'Send Message'
-      required: true
+        button_label:
+          type: text
+          label: Label for Button
+          placeholder: 'Send Message'
+          required: true
 
-    legalnotice:
-      type: textarea
-      rows: 5;
-      label: Text below button (use markdown)
-      placeholder: 'Add your legal text or other hints here'
+        legalnotice:
+          type: textarea
+          rows: 5;
+          label: Text below button (use markdown)
+          placeholder: 'Add your legal text or other hints here'
 
-    message_success:
-      type: textarea
-      rows: 5;
-      label: Message if mail is send (use markdown)
-      placeholder: 'Add your legal text or other hints here'
+        message_success:
+          type: textarea
+          rows: 5;
+          label: Message if mail is send (use markdown)
+          placeholder: 'Add your legal text or other hints here'
 
-    message_error:
-      type: textarea
-      rows: 5;
-      label: Message if mail failed (use markdown)
-      placeholder: 'Add your legal text or other hints here'
+        message_error:
+          type: textarea
+          rows: 5;
+          label: Message if mail failed (use markdown)
+          placeholder: 'Add your legal text or other hints here'
+
+    phpcaptcha:
+      type: fieldset
+      legend: Build in Captcha (with image)
+      fields:
+        captchaoptions:
+          type: radio
+          label: When should the captcha appear?
+          options:
+            standard: Show on page load (standard)
+            aftererror: Show after first wrong input
+            disabled: Disable
+
+    googlecaptcha:
+      type: fieldset
+      legend: Configure Google Recaptcha
+      fields:
+        recaptcha:
+          type: checkbox
+          label: Google Recaptcha Integration
+          checkboxlabel: Activate Recaptcha
+        recaptcha_webkey:
+          type: text
+          label: Recaptcha Website Key
+          help: Add the recaptcha website key here. You can get the key from the recaptcha website.
+          description: The website key is mandatory if you activate the recaptcha field
+        recaptcha_secretkey:
+          type: text
+          label: Recaptcha Secret Key
+          help: Add the recaptcha secret key here. You can get the key from the recaptcha website.
+          description: The secret key is mandatory if you activate the recaptcha field        
 
 public:
   fields:

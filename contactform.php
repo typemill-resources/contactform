@@ -9,14 +9,13 @@ class ContactForm extends Plugin
 	protected $settings;
 	protected $pluginSettings;
 	protected $originalHtml;
-	protected $active = false;
+	protected $contactpage;
 	
     public static function getSubscribedEvents()
     {
 		return array(
 			'onSessionSegmentsLoaded' 	=> 'onSessionSegmentsLoaded',
 			'onHtmlLoaded' 				=> 'onHtmlLoaded',
-			'onPageReady'				=> 'onPageReady',
 		);
     }	
 		
@@ -24,20 +23,17 @@ class ContactForm extends Plugin
 	public function onSessionSegmentsLoaded($segments)
 	{
 		$this->settings = $this->getSettings();
-		
-		if(isset($this->settings['plugins']['mail']) AND $this->settings['plugins']['mail']['active'])
-		{
-			$this->active = true;
-			$this->pluginSettings = $this->getPluginSettings('contactform');
-		}
-		
-		if($this->active && $this->getPath() == $this->pluginSettings['page_value'])
+		$this->pluginSettings = $this->getPluginSettings('contactform');
+		$this->contactpage = trim($this->pluginSettings['page_value'], '/');
+
+		if($this->path == $this->contactpage )
 		{
 			# get url-segments with cookies on
 			$data 	= $segments->getData();
 			
 			# add the page for contact form to the segments with cookies
-			$data[]	= $this->pluginSettings['page_value'];
+			$data[]	= $this->contactpage;
+			$data[] = '/' . $this->contactpage;
 			
 			$segments->setData($data);
 		}
@@ -46,44 +42,34 @@ class ContactForm extends Plugin
 	# create the output
 	public function onHtmlLoaded($html)
 	{
-		if($this->active && $this->getPath() == $this->pluginSettings['page_value'])
+		if($this->path == $this->contactpage)
 		{
 			$content = $html->getData();
-			
-			# add css
-			# $this->addCSS('/contactform/css/contactform.css');
-			
+						
 			# check if form data have been stored
 			$formdata = $this->getFormdata('contactform');
 
 			if($formdata)
 			{
-				if($formdata == 'bot')
+				$send = false; 
+					
+				if(isset($this->container['mail']))
+				{ 
+					$mail = $this->container['mail'];
+					$mail->addAdress($this->pluginSettings['mailto']);
+					$mail->addReplyTo($formdata['email'], $formdata['name']);
+					$mail->setSubject($formdata['subject']);
+					$mail->setBody($formdata['message']);
+					$send = $mail->send();
+				}
+
+				if($send === true)
 				{
-					$result = '<div class="mailresult"><h3>Sorry!</h3><p>But we think you are a bot...</p></div>';
+					$result = '<div class="mailresult">' . $this->markdownToHtml($this->pluginSettings['message_success']) . '</div>';
 				}
 				else
 				{
-					$send = false; 
-					
-					if(isset($this->container['mail']))
-					{ 
-						$mail = $this->container['mail'];
-						$mail->addAdress($this->pluginSettings['mailto']);
-						$mail->addReplyTo($formdata['email'], $formdata['name']);
-						$mail->setSubject($formdata['subject']);
-						$mail->setBody($formdata['message']);
-						$send = $mail->send();
-					}
-
-					if($send === true)
-					{
-						$result = '<div class="mailresult">' . $this->markdownToHtml($this->pluginSettings['message_success']) . '</div>';
-					}
-					else
-					{
-						$result = '<div class="mailresult">' . $this->markdownToHtml($this->pluginSettings['message_error']) . '</div>';
-					}
+					$result = '<div class="mailresult">' . $this->markdownToHtml($this->pluginSettings['message_error']) . '</div>';
 				}
 	
 				# add thank you to the content
@@ -100,14 +86,4 @@ class ContactForm extends Plugin
 			$html->setData($content);
 		}
 	}
-
-	public function onPageReady($data)
-	{
-		if(!$this->active && $this->container['flash'] && strpos($this->getPath(), 'tm/plugins') !== false)
-		{
-			$pagedata = $data->getData();
-			$pagedata['messages']['error'] = ['You have to activate the mail-plugin to use the contact form'];
-			$data->setData($pagedata);
-		}
-	}	
 }
