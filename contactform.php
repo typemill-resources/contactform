@@ -45,7 +45,7 @@ class ContactForm extends Plugin
 		if($this->path == $this->contactpage)
 		{
 			$content = $html->getData();
-						
+
 			# check if form data have been stored
 			$formdata = $this->getFormdata('contactform');
 
