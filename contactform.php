@@ -52,7 +52,7 @@ class ContactForm extends Plugin
 			if($formdata)
 			{
 				$send = false; 
-					
+
 				if(isset($this->container['mail']))
 				{ 
 					$mail = $this->container['mail'];
@@ -78,7 +78,7 @@ class ContactForm extends Plugin
 			else
 			{
 				# get the public forms for the plugin
-				$contactform = $this->generateForm('contactform');				
+				$contactform = $this->generateForm('contactform', 'form.save');				
 				
 				# add forms to the content
 				$content = $content . '<div class="tm-contactform">' . $contactform . '</div>';					
