@@ -55,11 +55,13 @@ class ContactForm extends Plugin
 
 				if(isset($this->container['mail']))
 				{ 
+					$message = 'From: ' . $formdata['email'] . ', ' . $formdata['name'] . "\r\r" . $formdata['message'];
+
 					$mail = $this->container['mail'];
 					$mail->addAdress($this->pluginSettings['mailto']);
-					$mail->addReplyTo($formdata['email'], $formdata['name']);
+					$mail->addReplyTo($formdata['email']);
 					$mail->setSubject($formdata['subject']);
-					$mail->setBody($formdata['message']);
+					$mail->setBody($message);
 					$send = $mail->send();
 				}
 
