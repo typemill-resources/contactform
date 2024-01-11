@@ -3,6 +3,11 @@
 namespace Plugins\contactform;
 
 use \Typemill\Plugin;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Slim\Routing\RouteContext;
+use \Typemill\Events\OnTwigLoaded;
+
 
 class ContactForm extends Plugin
 {
@@ -13,79 +18,124 @@ class ContactForm extends Plugin
 	
     public static function getSubscribedEvents()
     {
-		return array(
+		return [
 			'onSessionSegmentsLoaded' 	=> 'onSessionSegmentsLoaded',
 			'onHtmlLoaded' 				=> 'onHtmlLoaded',
-		);
-    }	
-		
+		];
+    }
+
+	# you can add new routes for public, api, or admin-area	
+	public static function addNewRoutes()
+	{
+		return [ 
+
+			# add a frontend route to receive form data
+			[
+				'httpMethod' 	=> 'post', 
+				'route' 		=> '/contactprocessor', 
+				'name' 			=> 'contact.send', 
+				'class' 		=> 'Plugins\contactform\ContactForm:send',
+			],
+		];
+	}
+
 	# add the path stored in user-settings to initiate session and csrf-protection
 	public function onSessionSegmentsLoaded($segments)
 	{
-		$this->settings = $this->getSettings();
-		$this->pluginSettings = $this->getPluginSettings('contactform');
-		$this->contactpage = trim($this->pluginSettings['page_value'], '/');
+		$this->settings 		= $this->getSettings();
+		$this->pluginSettings 	= $this->getPluginSettings();
+		$this->contactpage 		= trim($this->pluginSettings['page_value'], '/');
 
-		if($this->path == $this->contactpage )
-		{
-			# get url-segments with cookies on
-			$data 	= $segments->getData();
-			
-			# add the page for contact form to the segments with cookies
-			$data[]	= $this->contactpage;
-			$data[] = '/' . $this->contactpage;
-			
-			$segments->setData($data);
-		}
+		# get url-segments with cookies on
+		$data 	= $segments->getData();
+		
+		# add the page for contact form to the segments with cookies
+		$data[]	= $this->contactpage;
+		$data[] = '/' . $this->contactpage;
+		$data[]	= 'contactprocessor';
+		$data[]	= '/contactprocessor';
+		
+		$segments->setData($data);
 	}
 
 	# create the output
 	public function onHtmlLoaded($html)
 	{
-		if($this->path == $this->contactpage)
+		if($this->route == $this->contactpage)
 		{
 			$content = $html->getData();
 
-			# check if form data have been stored
-			$formdata = $this->getFormdata('contactform');
-
-			if($formdata)
+			# if a mail has been send
+			$result = $_SESSION['contactform']['result'] ?? false;
+			if($result)
 			{
-				$send = false; 
-
-				if(isset($this->container['mail']))
-				{ 
-					$message = 'From: ' . $formdata['email'] . ', ' . $formdata['name'] . "\r\r" . $formdata['message'];
-
-					$mail = $this->container['mail'];
-					$mail->addAdress($this->pluginSettings['mailto']);
-					$mail->addReplyTo($formdata['email']);
-					$mail->setSubject($formdata['subject']);
-					$mail->setBody($message);
-					$send = $mail->send();
-				}
-
-				if($send === true)
+				if($result == 'success')
 				{
-					$result = '<div class="mailresult">' . $this->markdownToHtml($this->pluginSettings['message_success']) . '</div>';
+					$content = $content . '<div class="tm-contactresult"><div class="mailresult">' . $this->markdownToHtml($this->pluginSettings['message_success']) . '</div></div>';
 				}
-				else
+				elseif($result == 'error')
 				{
-					$result = '<div class="mailresult">' . $this->markdownToHtml($this->pluginSettings['message_error']) . '</div>';
+					$content = $content . '<div class="tm-contactresult"><div class="mailresult">' . $this->markdownToHtml($this->pluginSettings['message_error']) . $_SESSION['contactform']['error'] . '</div></div>';
 				}
-	
-				# add thank you to the content
-				$content = $content . '<div class="tm-contactresult">' . $result . '</div>';
+				unset($_SESSION['contactform']);
+				unset($_SESSION['old']);
 			}
 			else
 			{
 				# get the public forms for the plugin
-				$contactform = $this->generateForm('contactform', 'form.save');				
-				
+				$contactform = $this->generateForm('contact.send');
+
 				# add forms to the content
-				$content = $content . '<div class="tm-contactform">' . $contactform . '</div>';					
+				$content = $content . '<div class="tm-contactform">' . $contactform . '</div>';
 			}
+
 			$html->setData($content);
 		}
+	}
+
+	public function send(Request $request, Response $response, $args)
+	{
+		# we have to dispatch the twig event so mail gets loaded
+		$this->container->get('dispatcher')->dispatch(new OnTwigLoaded(false), 'onTwigLoaded');		
+
+		$forminput 			= $request->getParsedBody();
+		$referer 			= $request->getHeader('HTTP_REFERER');
+
+		# validate input
+		$validvalues 		= $this->validateParams($forminput);
+		if(!$validvalues)
+		{
+			# errors are set to session already
+			# do you want to add flash message? But it requires that theme has flash
+			return $response->withHeader('Location', $referer[0])->withStatus(302);
+		}
+		
+		$send 				= false;
+		$mail 				= $this->container->get('mail');
+		$pluginSettings 	= $this->getPluginSettings();
+
+		if($mail)
+		{
+			$message = 'From: ' . $validvalues['email'] . ', ' . $validvalues['name'] . "\r\r" . $validvalues['message'];
+
+			$mail->addAdress($pluginSettings['mailto']);
+			$mail->addReplyTo($validvalues['email']);
+			$mail->setSubject($validvalues['subject']);
+			$mail->setBody($message);
+
+			$send = $mail->send();
+		}
+
+		if($send === true)
+		{
+			$_SESSION['contactform']['result'] = 'success';
+		}
+		else
+		{
+			$_SESSION['contactform']['result'] = 'error';
+			$_SESSION['contactform']['error'] = $send;
+		}
+		
+		return $response->withHeader('Location', $referer[0])->withStatus(302);
 	}
 }

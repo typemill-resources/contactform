@@ -1,9 +1,9 @@
 name: Contactform
-version: 1.1.2
+version: 2.0.0
 description: Add a simple contact form to your typemill website.
 author: Sebastian Schürmanns
 homepage: https://typemill.net
-licence: MIT
+license: MIT
 dependencies:
   - mail
 
@@ -98,24 +98,24 @@ forms:
             aftererror: Show after first wrong input
             disabled: Disable
 
-    googlecaptcha:
-      type: fieldset
-      legend: Configure Google Recaptcha
-      fields:
-        recaptcha:
-          type: checkbox
-          label: Google Recaptcha Integration
-          checkboxlabel: Activate Recaptcha
-        recaptcha_webkey:
-          type: text
-          label: Recaptcha Website Key
-          help: Add the recaptcha website key here. You can get the key from the recaptcha website.
-          description: The website key is mandatory if you activate the recaptcha field
-        recaptcha_secretkey:
-          type: text
-          label: Recaptcha Secret Key
-          help: Add the recaptcha secret key here. You can get the key from the recaptcha website.
-          description: The secret key is mandatory if you activate the recaptcha field        
+#    googlecaptcha:
+#      type: fieldset
+#      legend: Configure Google Recaptcha
+#      fields:
+#        recaptcha:
+#          type: checkbox
+#          label: Google Recaptcha Integration
+#          checkboxlabel: Activate Recaptcha
+#        recaptcha_webkey:
+#          type: text
+#          label: Recaptcha Website Key
+#          help: Add the recaptcha website key here. You can get the key from the recaptcha website.
+#          description: The website key is mandatory if you activate the recaptcha field
+#        recaptcha_secretkey:
+#          type: text
+#          label: Recaptcha Secret Key
+#          help: Add the recaptcha secret key here. You can get the key from the recaptcha website.
+#          description: The secret key is mandatory if you activate the recaptcha field        
 
 public:
   fields:
