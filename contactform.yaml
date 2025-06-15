@@ -1,5 +1,5 @@
 name: Contactform
-version: 2.0.0
+version: 2.0.2
 description: Add a simple contact form to your typemill website.
 author: Sebastian Schürmanns
 homepage: https://typemill.net
@@ -71,7 +71,7 @@ forms:
         legalnotice:
           type: textarea
           rows: 5;
-          label: Text below button (use markdown)
+          label: Text above the send button (use markdown)
           placeholder: 'Add your legal text or other hints here'
 
         message_success:

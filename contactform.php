@@ -78,7 +78,6 @@ class ContactForm extends Plugin
 					$content = $content . '<div class="tm-contactresult"><div class="mailresult">' . $this->markdownToHtml($this->pluginSettings['message_error']) . $_SESSION['contactform']['error'] . '</div></div>';
 				}
 				unset($_SESSION['contactform']);
-				unset($_SESSION['old']);
 			}
 			else
 			{
@@ -110,9 +109,15 @@ class ContactForm extends Plugin
 			return $response->withHeader('Location', $referer[0])->withStatus(302);
 		}
 		
-		$send 				= false;
-		$mail 				= $this->container->get('mail');
 		$pluginSettings 	= $this->getPluginSettings();
+		$send 				= false;
+		try {
+		    $mail = $this->container->get('mail');
+		} 
+		catch (\DI\NotFoundException $e)
+		{
+		    $mail 			= false;
+		}
 
 		if($mail)
 		{
