@@ -3,10 +3,9 @@
 namespace Plugins\contactform;
 
 use \Typemill\Plugin;
+use Typemill\Models\Mail;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
-use Slim\Routing\RouteContext;
-use \Typemill\Events\OnTwigLoaded;
 
 
 class ContactForm extends Plugin
@@ -14,7 +13,7 @@ class ContactForm extends Plugin
 	protected $settings;
 	protected $pluginSettings;
 	protected $originalHtml;
-	protected $contactpage;
+	protected $contactpage = false;
 	
     public static function getSubscribedEvents()
     {
@@ -42,12 +41,20 @@ class ContactForm extends Plugin
 	# add the path stored in user-settings to initiate session and csrf-protection
 	public function onSessionSegmentsLoaded($segments)
 	{
-		$this->settings 		= $this->getSettings();
-		$this->pluginSettings 	= $this->getPluginSettings();
-		$this->contactpage 		= trim($this->pluginSettings['page_value'], '/');
-
 		# get url-segments with cookies on
 		$data 	= $segments->getData();
+
+		$this->settings 		= $this->getSettings();
+		$this->pluginSettings 	= $this->getPluginSettings();
+
+		if(empty($this->pluginSettings) OR !isset($this->pluginSettings['page_value']) OR ($this->pluginSettings['page_value'] == ''))
+		{
+			$segments->setData($data);
+
+			return;
+		}
+
+		$this->contactpage 		= trim($this->pluginSettings['page_value'], '/');
 		
 		# add the page for contact form to the segments with cookies
 		$data[]	= $this->contactpage;
@@ -61,8 +68,19 @@ class ContactForm extends Plugin
 	# create the output
 	public function onHtmlLoaded($html)
 	{
-		if($this->route == $this->contactpage)
+		if(!$this->contactpage)
 		{
+			$content = $html->getData();
+
+			$content = '<div style="width=100%;display:block;padding:5px;background-color:red;color:white;">Please define a contact page in the contact plugin.</div>' . $content;
+
+			$html->setData($content);
+
+			return;
+		}
+
+		if($this->route == $this->contactpage)
+		{			
 			$content = $html->getData();
 
 			# if a mail has been send
@@ -94,9 +112,6 @@ class ContactForm extends Plugin
 
 	public function send(Request $request, Response $response, $args)
 	{
-		# we have to dispatch the twig event so mail gets loaded
-		$this->container->get('dispatcher')->dispatch(new OnTwigLoaded(false), 'onTwigLoaded');		
-
 		$forminput 			= $request->getParsedBody();
 		$referer 			= $request->getHeader('HTTP_REFERER');
 
@@ -105,42 +120,29 @@ class ContactForm extends Plugin
 		if(!$validvalues)
 		{
 			# errors are set to session already
-			# do you want to add flash message? But it requires that theme has flash
 			return $response->withHeader('Location', $referer[0])->withStatus(302);
 		}
-		
+
 		$pluginSettings 	= $this->getPluginSettings();
-		$send 				= false;
-		try {
-		    $mail = $this->container->get('mail');
-		} 
-		catch (\DI\NotFoundException $e)
-		{
-		    $mail 			= false;
-		}
+		$settings 			= $this->getSettings();
 
-		if($mail)
-		{
-			$message = 'From: ' . $validvalues['email'] . ', ' . $validvalues['name'] . "\r\r" . $validvalues['message'];
+		$mail 				= new Mail($settings);
 
-			$mail->addAdress($pluginSettings['mailto']);
-			$mail->addReplyTo($validvalues['email']);
-			$mail->setSubject($validvalues['subject']);
-			$mail->setBody($message);
+		$subject 			= $validvalues['subject'];
+		$message 			= 'From: ' . $validvalues['email'] . ', ' . $validvalues['name'] . "\r\r" . $validvalues['message'];
 
-			$send = $mail->send();
-		}
+		$send 				= $mail->send($pluginSettings['mailto'], $subject, $message);
 
-		if($send === true)
+		if($send)
 		{
 			$_SESSION['contactform']['result'] = 'success';
 		}
 		else
 		{
 			$_SESSION['contactform']['result'] = 'error';
-			$_SESSION['contactform']['error'] = $send;
+			$_SESSION['contactform']['error'] = $mail->error;
 		}
-		
+
 		return $response->withHeader('Location', $referer[0])->withStatus(302);
 	}
 }

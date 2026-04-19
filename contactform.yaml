@@ -1,11 +1,9 @@
 name: Contactform
-version: 2.0.2
+version: 2.1.0
 description: Add a simple contact form to your typemill website.
 author: Sebastian Schürmanns
 homepage: https://typemill.net
 license: MIT
-dependencies:
-  - mail
 
 settings:
   mailto: your@email-here.io
