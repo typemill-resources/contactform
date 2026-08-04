@@ -93,7 +93,7 @@ class ContactForm extends Plugin
 				}
 				elseif($result == 'error')
 				{
-					$content = $content . '<div class="tm-contactresult"><div class="mailresult">' . $this->markdownToHtml($this->pluginSettings['message_error']) . $_SESSION['contactform']['error'] . '</div></div>';
+					$content = $content . '<div class="tm-contactresult"><div class="mailresult">' . $this->markdownToHtml($this->pluginSettings['message_error']) . ($_SESSION['contactform']['error'] ?? '') . '</div></div>';
 				}
 				unset($_SESSION['contactform']);
 			}
@@ -113,14 +113,21 @@ class ContactForm extends Plugin
 	public function send(Request $request, Response $response, $args)
 	{
 		$forminput 			= $request->getParsedBody();
-		$referer 			= $request->getHeader('HTTP_REFERER');
+		$referer 			= $request->getHeaderLine('Referer');
+
+		if(empty($referer))
+		{
+			$baseurl 		= rtrim($this->urlinfo['baseurl'], '/');
+			$contactpage 	= $this->contactpage ? ltrim($this->contactpage, '/') : '';
+			$referer 		= $baseurl . '/' . $contactpage;
+		}
 
 		# validate input
 		$validvalues 		= $this->validateParams($forminput);
 		if(!$validvalues)
 		{
 			# errors are set to session already
-			return $response->withHeader('Location', $referer[0])->withStatus(302);
+			return $response->withHeader('Location', $referer)->withStatus(302);
 		}
 
 		$pluginSettings 	= $this->getPluginSettings();
@@ -143,6 +150,6 @@ class ContactForm extends Plugin
 			$_SESSION['contactform']['error'] = $mail->error;
 		}
 
-		return $response->withHeader('Location', $referer[0])->withStatus(302);
+		return $response->withHeader('Location', $referer)->withStatus(302);
 	}
 }
