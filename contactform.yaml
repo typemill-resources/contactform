@@ -3,7 +3,7 @@ version: 2.2.0
 description: Add a simple contact form to your typemill website.
 author: Sebastian Schürmanns
 homepage: https://typemill.net
-Repo: https://github.com/typemill-resources/contactform 
+repo: https://github.com/typemill-resources/contactform 
 license: MIT
 
 settings:
